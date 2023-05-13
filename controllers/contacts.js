@@ -32,10 +32,10 @@ const deleteContact = async (req, res) => {
     res.status(200).json({message: "contact deleted"});
 }
 
-const updateContact = async (req, res) => {
-    const {id} = req.params;
+const updateContact = async (req, res, next) => {
+    const {id} = req.params; 
     const updatedContact = await contactsManager.updateContact(id, req.body);
-    
+
     if (!updatedContact) {
       throw HttpError(404, "Not found")
     }
