@@ -20,7 +20,7 @@ const contactSchema = new Schema({
 });
 
 const Contact = model('contacts', contactSchema);
-contactSchema.post('save', handleMangooseError)
+contactSchema.post('save', handleMangooseError);
 
 const contactSchemaJoi = Joi.object({
   name: Joi.string().required(),
