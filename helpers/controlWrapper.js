@@ -1,5 +1,4 @@
 const controlWrapper = ctrl => {
-
     const func = async (req, res, next) => {
         try {
             await ctrl(req, res, next);
