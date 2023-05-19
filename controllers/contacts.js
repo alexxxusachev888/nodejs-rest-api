@@ -1,13 +1,26 @@
-const { Contact } = require('../models/contact');
-const controlWrapper = require('../helpers/controlWrapper');
-const HttpError = require('../helpers/HttpError');
+const {Contact} = require('../models/contact');
+const {controlWrapper, HttpError} = require('../helpers');
 
 const getAllContacts = async (req, res) => {
   const {_id: owner} = req.user;
-  const {page = 1, limit = 10} = req.query;
-  const skip = (page - 1) * limit;
-  const getAllContacts = await Contact.find({owner},'-createdAt - updatedAt', {skip, limit});
-  res.status(200).json(getAllContacts);
+    let {page = 1, limit = 20, favorite} = req.query;
+
+    page = Number(page) > 0 ? Number(page) : 1;
+    limit = Number(limit) > 0 ? Number(limit) : 20;
+
+    const filter = {owner};
+
+    if (favorite !== undefined) {
+      filter.favorite = favorite === 'true';
+    }
+
+    const contacts = await Contact.find(
+      filter, 
+      '-createdAt -updatedAt', 
+      { skip: (page - 1) * limit, limit }
+    );
+
+    res.status(200).json(contacts);
 }
 
 const getContactById = async (req, res) => {
