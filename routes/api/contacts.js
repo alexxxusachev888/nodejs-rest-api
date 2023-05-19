@@ -9,7 +9,7 @@ const {
     deleteContact
   } = require('../../controllers/contacts');
   
-const { schemas: {contactSchemaJoi, updateFavoriteSchemaJoi} } = require('../../models/contacts');
+const { schemas: {contactSchemaJoi, updateFavoriteSchemaJoi} } = require('../../models/contact');
 const isValidId = require('../../middlewares/isValidId')
 const {validateBody, validateFavorites} = require('../../middlewares/validateBody');
 

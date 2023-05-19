@@ -1,9 +1,12 @@
-const { Contact } = require('../models/contacts');
+const { Contact } = require('../models/contact');
 const controlWrapper = require('../helpers/controlWrapper');
 const HttpError = require('../helpers/HttpError');
 
 const getAllContacts = async (req, res) => {
-  const getAllContacts = await Contact.find();
+  const {_id: owner} = req.user;
+  const {page = 1, limit = 10} = req.query;
+  const skip = (page - 1) * limit;
+  const getAllContacts = await Contact.find({owner},'-createdAt - updatedAt', {skip, limit});
   res.status(200).json(getAllContacts);
 }
 
@@ -18,7 +21,8 @@ const getContactById = async (req, res) => {
 }
 
 const addNewContact = async (req, res) => {
-  const newContact = await Contact.create(req.body)
+  const {_id: owner} = req.user;
+  const newContact = await Contact.create({...req.body}, owner)
   res.status(201).json(newContact);
 }
 
