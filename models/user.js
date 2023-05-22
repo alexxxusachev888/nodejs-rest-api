@@ -2,7 +2,11 @@ const {Schema, model} = require('mongoose');
 const Joi = require('joi');
 const {handleMangooseError} = require('../helpers');
 
-const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
+const errorMessages = (label) => ({
+  'string.base': `"${label}" should be a type of 'text'`,
+  'string.empty': `"${label}" cannot be an empty field`,
+  'any.required': `"${label}" is a required field`
+});
 
 const userSchema = new Schema({
     password: {
@@ -26,17 +30,17 @@ const User = model('user', userSchema);
 userSchema.post('save', handleMangooseError);
 
 const registerSchema = Joi.object({
-    password: Joi.string().required().messages({'any.required': `Помилка від Joi або іншої бібліотеки валідації`}),
-    email: Joi.string().pattern(emailRegex).required().messages({'any.required': `Помилка від Joi або іншої бібліотеки валідації`}),
+  password: Joi.string().required().messages(errorMessages('password')),
+  email: Joi.string().required().messages(errorMessages('email')),
 }).options({ abortEarly: false });
 
 const loginSchema = Joi.object({
-    password: Joi.string().required().messages({'any.required': `Помилка від Joi або іншої бібліотеки валідації`}),
-    email: Joi.string().pattern(emailRegex).required().messages({'any.required': `Помилка від Joi або іншої бібліотеки валідації`}),
-  }).options({ abortEarly: false });
+  password: Joi.string().required().messages(errorMessages('password')),
+  email: Joi.string().required().messages(errorMessages('email')),
+}).options({ abortEarly: false });
 
 const updateSubscriptionSchema = Joi.object({
-  subscription: Joi.string().valid('starter', 'pro', 'business').required().messages({'any.required': `Помилка від Joi або іншої бібліотеки валідації`}),
+subscription: Joi.string().valid('starter', 'pro', 'business').required().messages(errorMessages('subscription')),
 }).options({ abortEarly: false });
   
   const schemas = {

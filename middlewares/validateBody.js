@@ -9,7 +9,12 @@ const validateBody = schema => {
 
       const {error} = schema.validate(req.body);
 
-      if(error) {
+      if (error) {
+        const validationErrors = error.details.map(detail => detail.message);
+        next(HttpError(400, `${validationErrors.join(', ')}`));
+      }
+
+      /* if(error) {
         if(error.details.some(detail => detail.type === 'any.required')) {
             next(HttpError(400, 'Помилка від Joi або іншої бібліотеки валідації'));
             return;
@@ -17,7 +22,7 @@ const validateBody = schema => {
     
         const missingFields = error.details.map(detail => detail.context.key);
         next(HttpError(400, `Missing required ${missingFields.join(', ')} field(s)`));
-    } else {
+    }  */else {
         next();
     }
   }
