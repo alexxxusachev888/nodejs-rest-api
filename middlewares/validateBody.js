@@ -8,21 +8,12 @@ const validateBody = schema => {
       }
 
       const {error} = schema.validate(req.body);
-
+      console.log(error.context)
       if (error) {
         const validationErrors = error.details.map(detail => detail.message);
         next(HttpError(400, `${validationErrors.join(', ')}`));
       }
-
-      /* if(error) {
-        if(error.details.some(detail => detail.type === 'any.required')) {
-            next(HttpError(400, 'Помилка від Joi або іншої бібліотеки валідації'));
-            return;
-        }
-    
-        const missingFields = error.details.map(detail => detail.context.key);
-        next(HttpError(400, `Missing required ${missingFields.join(', ')} field(s)`));
-    }  */else {
+      else {
         next();
     }
   }
@@ -39,7 +30,23 @@ const validateFavorites = schema => {
   return func
 }
 
+const validateEmail = schema => {
+  const func = (req, res, next)=> {
+
+    const {error} = schema.validate(req.body);
+    
+    if(error) {
+      if(Object.keys(req.body).length === 0 || error.details.type === "any.required") {
+        next(HttpError(400, "missing required field email"));
+      }
+    }
+    next()
+  }
+  return func
+}
+
 module.exports = {
   validateBody, 
-  validateFavorites 
+  validateFavorites,
+  validateEmail
 };

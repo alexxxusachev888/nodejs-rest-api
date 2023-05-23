@@ -5,7 +5,8 @@ const gravatar = require('gravatar');
 const jimp = require('jimp');
 const path = require('path');
 const fs = require('fs/promises');
-const {controlWrapper, HttpError} = require('../helpers');
+const {nanoid} = require("nanoid");
+const {controlWrapper, HttpError, sendEmail} = require('../helpers');
 
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars')
 
@@ -18,8 +19,17 @@ const register = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const tempAvatar = gravatar.url(email);
-    console.log(tempAvatar)
-    const newUser = await User.create({...req.body, password: hashedPassword, avatarURL: tempAvatar});
+    const verificationToken = nanoid();
+
+    const newUser = await User.create({...req.body, password: hashedPassword, avatarURL: tempAvatar, verificationToken});
+
+    const verifyEmail = {
+        to: email,
+        subject: "Veridication of the email",
+        html: `<a target="_blank" href="${process.env.BASE_URL}/users/verify/${verificationToken}">Click the link to verify your email</a>`
+    }
+
+    await sendEmail(verifyEmail);
 
     res.json({
         user: {
@@ -36,6 +46,11 @@ const login = async (req, res) => {
     if(!user){
         throw HttpError(401, "Email or password is wrong")
     }
+
+    if(!user.verify) {
+        throw HttpError(400, "Email not verified")
+    }
+
     const comparePassword = await bcrypt.compare(password, user.password);
 
     if(!comparePassword){
@@ -100,12 +115,55 @@ const updateAvatar = async (req, res) => {
         avatarURL,
     })
 }
+
+const verifyEmail = async(req, res) => {
+    const {verificationToken} = req.params;
+    const user = await User.findOne({verificationToken});
+
+    if(!user) {
+        throw HttpError(404, "User not found")
+    }
+
+    await User.findByIdAndUpdate(user._id, {verify: true, verificationToken: null});
+
+    res.json({
+        message: 'Verification successful',
+    })
+}
+
+const resendVerification = async (req, res) => {
+    const {email} = req.body;
+    const user = await User.findOne({email});
+
+    if(!user) {
+        throw HttpError(401, "Email not found")
+    }
+    
+    if(user.verify) {
+        throw HttpError(400, "Verification has already been passed")
+    }
+
+    const verifyEmail = {
+        to: email,
+        subject: "Veridication of the email",
+        html: `<a target="_blank" href="${process.env.BASE_URL}/users/verify/${user.verificationToken}">Click the link to verify your email</a>`
+    }
+
+    await sendEmail(verifyEmail);
+
+    res.json({
+        message: 'Verification email sent',
+    })
+
+}
   
-  module.exports = {
+module.exports = {
       register: controlWrapper(register),
       login: controlWrapper(login),
       getCurrent: controlWrapper(getCurrent),
       logout: controlWrapper(logout),
       updateSubscription: controlWrapper(updateSubscription),
-      updateAvatar: controlWrapper(updateAvatar)
+      updateAvatar: controlWrapper(updateAvatar),
+      verifyEmail: controlWrapper(verifyEmail),
+      resendVerification: controlWrapper(resendVerification)
   }
