@@ -1,6 +1,6 @@
 const {Schema, model} = require('mongoose');
 const Joi = require('joi');
-const handleMangooseError = require('../helpers/handleMangooseError')
+const {handleMangooseError} = require('../helpers')
 
 const contactSchema = new Schema({
   name: {
@@ -17,6 +17,10 @@ const contactSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: 'user',
+  }
 });
 
 const Contact = model('contacts', contactSchema);
