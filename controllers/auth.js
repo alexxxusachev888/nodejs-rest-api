@@ -1,7 +1,13 @@
 const {User} = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
+const gravatar = require('gravatar');
+const jimp = require('jimp');
+const path = require('path');
+const fs = require('fs/promises');
 const {controlWrapper, HttpError} = require('../helpers');
+
+const avatarsDir = path.join(__dirname, '../', 'public', 'avatars')
 
 const register = async (req, res) => {
     const {email, password} = req.body;
@@ -10,8 +16,10 @@ const register = async (req, res) => {
     if(isExist){
         throw HttpError(409, "Email in use")
     }
-    const hashedPassword = await bcrypt.hash(password, 10)
-    const newUser = await User.create({...req.body, password: hashedPassword});
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const tempAvatar = gravatar.url(email);
+    console.log(tempAvatar)
+    const newUser = await User.create({...req.body, password: hashedPassword, avatarURL: tempAvatar});
 
     res.json({
         user: {
@@ -73,6 +81,25 @@ const updateSubscription = async (req, res) => {
       subscription: user.subscription,
     });
   }
+
+const updateAvatar = async (req, res) => {
+    const {_id} = req.user;
+    const {path: tempUpload, originalname} = req.file;
+    const newFileName = `${_id}_${originalname}`;
+    const targetDir = path.join(avatarsDir, newFileName);
+
+    const image = await jimp.read(tempUpload);
+    image.resize(250, 250);
+    await image.writeAsync(tempUpload);
+
+    await fs.rename(tempUpload, targetDir);
+    const avatarURL = path.join('avatars', newFileName);
+    await User.findByIdAndUpdate(_id, {avatarURL});
+
+    res.json({
+        avatarURL,
+    })
+}
   
   module.exports = {
       register: controlWrapper(register),
@@ -80,4 +107,5 @@ const updateSubscription = async (req, res) => {
       getCurrent: controlWrapper(getCurrent),
       logout: controlWrapper(logout),
       updateSubscription: controlWrapper(updateSubscription),
+      updateAvatar: controlWrapper(updateAvatar)
   }
