@@ -8,7 +8,6 @@ const validateBody = schema => {
       }
 
       const {error} = schema.validate(req.body);
-      console.log(error.context)
       if (error) {
         const validationErrors = error.details.map(detail => detail.message);
         next(HttpError(400, `${validationErrors.join(', ')}`));
